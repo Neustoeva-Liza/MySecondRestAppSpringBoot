@@ -16,6 +16,9 @@ import ru.neustroeva.MySecondRestAppSpringBoot.service.ValidationService;
 import ru.neustroeva.MySecondRestAppSpringBoot.util.DateTimeUtil;
 
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
 @Slf4j
 @RestController
@@ -33,6 +36,13 @@ public class MyController {
                                              BindingResult bindingResult) {
 
         log.info("Получен request: {}", request);
+        try {
+            Instant sent = Instant.parse(request.getSystemTime());
+            long ms = Duration.between(sent, Instant.now()).toMillis();
+            log.info("Разница времени между получением request Сервисом 1 и Сервисом 2: {} мс", ms);
+        } catch (DateTimeParseException e) {
+            log.warn("Не удалось разобрать systemTime: {}", request.getSystemTime());
+        }
 
         Response response = Response.builder()
                 .uid(request.getUid())
