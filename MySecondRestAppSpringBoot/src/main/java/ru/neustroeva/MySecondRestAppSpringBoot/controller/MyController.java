@@ -3,6 +3,7 @@ package ru.neustroeva.MySecondRestAppSpringBoot.controller;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -12,10 +13,14 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.neustroeva.MySecondRestAppSpringBoot.exception.UnsupportedCodeException;
 import ru.neustroeva.MySecondRestAppSpringBoot.exception.ValidationFailedException;
 import ru.neustroeva.MySecondRestAppSpringBoot.model.*;
+import ru.neustroeva.MySecondRestAppSpringBoot.service.ModifyRequestService;
 import ru.neustroeva.MySecondRestAppSpringBoot.service.ValidationService;
 import ru.neustroeva.MySecondRestAppSpringBoot.util.DateTimeUtil;
 
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
 @Slf4j
 @RestController
@@ -23,9 +28,14 @@ public class MyController {
 
     private final ValidationService validationService;
 
+    private final ModifyRequestService modifyRequestService;
+
     @Autowired
-    public MyController(ValidationService validationService) {
+    public MyController(ValidationService validationService,
+                        @Qualifier("ModifySourceRequestService")
+                        ModifyRequestService modifyRequestService) {
         this.validationService = validationService;
+        this.modifyRequestService = modifyRequestService;
     }
 
     @PostMapping(value = "/feedback")
@@ -51,6 +61,9 @@ public class MyController {
 
             validationService.isUnsupportedCode(request.getUid());
             log.info("Проверка uid на поддерживаемость пройдена");
+
+            request.setSystemTime(Instant.now().toString());
+            modifyRequestService.modify(request);
         } catch (ValidationFailedException e) {
             log.error("Ошибка валидации: {}", e.getMessage());
             response.setCode(Codes.FAILED);
